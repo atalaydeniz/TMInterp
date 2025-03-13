@@ -1,14 +1,17 @@
-Turing Machine language:
+A Turing Machine Interpreter.
 
-($, s0) -> (R, s1);
-(Alphabet, state) -> (Alphabet+Way, state);
+Language example:
 
-Grammar: 
-Prog -> Epsilon | Stmts
-Stmts -> Stmt | Stmts
-Stmt -> In --> Out
-In -> (Char, State)
-Out -> (Char+Way, State)
+"A = Alphabet: {a, b} 
+     Input: $abab
+     Rules:
+     "($, s0) -> (R, s1)
+      (a, s1) -> (R, s2)
+      (A, s2) -> (a, h)
+      (A-a, s1) -> (R, s1)
 
-Output: 
-$ | char | char | ... 
+B = compose([A, R])
+
+run(B)
+"
+      

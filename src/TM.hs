@@ -1,6 +1,7 @@
 module TM where
 import Data.List
 
+type Alphabet = [Char]
 type State = String 
 type Tape = String
 type TapeIndex = Int
@@ -13,13 +14,14 @@ data Stmt = EStmt In Out deriving (Show)
 
 type TM = ([Stmt], State, Tape, TapeIndex)
 
+exTM :: TM 
 exTM = ([
-    (EStmt (EIn '#' "s0") (EOut 'R' "s1")),
+    (EStmt (EIn '$' "s0") (EOut 'R' "s1")),
      (EStmt (EIn '#' "s1") (EOut 'a' "s1")),
      (EStmt (EIn 'a' "s1") (EOut 'R' "s2")),
      (EStmt (EIn '#' "s2") (EOut 'a' "s2")),
      (EStmt (EIn 'a' "s2") (EOut 'R' "h"))
-     ], "s0", "#", 0 :: Int)
+     ], "s0", "$", 0 :: Int)
 
 findRule :: TM -> Either String Stmt
 findRule ((x:xs), s, t, i) = case x of 
