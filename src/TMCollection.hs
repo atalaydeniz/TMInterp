@@ -3,23 +3,23 @@ module TMCollection where
 import TM
 
 r_ :: TM
-r_ = ([
+r_ = ([], [
     (EStmt (EIn '$' "s0") (EOut 'R' "h"))
      ], "s0", "$", 0 :: Int) 
 
 l_ :: TM
-l_ = ([
+l_ = ([], [
     (EStmt (EIn '$' "s0") (EOut 'L' "h"))
      ], "s0", "$", 0 :: Int) 
 
 sigma_ :: Char -> TM
-sigma_ a = ([
+sigma_ a = ([a], [
     (EStmt (EIn '$' "s0") (EOut a "h"))
     ], "s0", "$", 0 :: Int)
 
 runtil_ :: Char -> TM
-runtil_ a = ([
+runtil_ a = ([a], [
     (EStmt (EIn '$' "s0") (EOut 'R' "s1")),
     (EStmt (EIn a "s1") (EOut a "h")),
-    (EStmt (EIn _ "s1") (EOut 'R' "s1"))
+    (EStmt (EIn '#' "s1") (EOut 'R' "s1"))
     ], "s0", "$", 0 :: Int)
