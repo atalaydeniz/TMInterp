@@ -1,31 +1,19 @@
 module TM where
 import Data.List
-
-type Alphabet = [Char]
-type State = String 
-type Tape = String
-type TapeIndex = Int
-
-data In = EIn Char State deriving (Show)
-
-data Out = EOut Char State deriving (Show)
-
-data Stmt = EStmt In Out deriving (Show)
-
-type TM = (Alphabet, [Stmt], State, Tape, TapeIndex)
+import ParseTM
 
 exTM :: TM 
 exTM = (['a'], [
-    (EStmt (EIn '$' "s0") (EOut 'R' "s1")),
-     (EStmt (EIn '#' "s1") (EOut 'a' "s1")),
-     (EStmt (EIn 'a' "s1") (EOut 'R' "s2")),
-     (EStmt (EIn '#' "s2") (EOut 'a' "s2")),
-     (EStmt (EIn 'a' "s2") (EOut 'R' "h"))
+    (ERule (EIn '$' "s0") (EOut 'R' "s1")),
+     (ERule (EIn '#' "s1") (EOut 'a' "s1")),
+     (ERule (EIn 'a' "s1") (EOut 'R' "s2")),
+     (ERule (EIn '#' "s2") (EOut 'a' "s2")),
+     (ERule (EIn 'a' "s2") (EOut 'R' "h"))
      ], "s0", "$", 0 :: Int)
 
-findRule :: TM -> Either String Stmt
+findRule :: TM -> Either String Rule
 findRule (a, (x:xs), s, t, i) = case x of 
-    (EStmt (EIn c0 s0) o) -> if (s == s0 && t!!i == c0) then Right x else findRule (a, xs, s, t, i)
+    (ERule (EIn c0 s0) o) -> if (s == s0 && t!!i == c0) then Right x else findRule (a, xs, s, t, i)
 findRule (_, [], _, _, _) = Left "Stuck"
 
 applyRule :: TM -> Out -> Either String TM
@@ -50,7 +38,7 @@ prettyPrintEither (Right x) = prettyPrint x
 eval :: TM -> Either String TM
 eval (a, [], _, x, _) = Left "No rules are given."
 eval (a, r, s, t, i) =  case findRule (a, r, s, t, i) of
-    Right (EStmt (EIn c0 s0) (EOut c1 s1)) -> case applyRule (a, r, s, t, i) (EOut c1 s1) of
+    Right (ERule (EIn c0 s0) (EOut c1 s1)) -> case applyRule (a, r, s, t, i) (EOut c1 s1) of
         Right (a, r', "h", t', i') -> Right (a, r', "h", t', i')
         Right (a, r', s', t', i') -> eval (a, r', s', t', i')
         Left error -> Left error
