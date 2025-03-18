@@ -11,6 +11,38 @@ exTM = (['a'], [
      (ERule (EIn 'a' "s2") (EOut 'R' "h"))
      ], "s0", "$", 0 :: Int)
 
+elimSameRules :: [Rule] -> [Rule]
+elimSameRules = nub
+
+extractInRule :: Rule -> In 
+extractInRule (ERule i o) = i
+
+extractOutRule :: Rule -> Out
+extractOutRule (ERule i o) = o
+
+isDTM :: TM -> Bool
+isDTM (_, r, _, _, _) = let k = (map extractInRule (elimSameRules r)) in
+    (length $ nub $ k) == (length $ k)
+
+isStarterRule :: TM -> Bool
+isStarterRule (a, r:rs, s, t, i) = case r of
+    (ERule (EIn '$' x) (EOut 'R' y)) -> True
+    _ -> isStarterRule (a, rs, s, t, i)
+isStarterRule (a, [], s, t, i) = False
+
+extractStartState :: [Rule] -> State
+extractStartState (r:rs) = case r of
+    (ERule (EIn '$' x) (EOut 'R' y)) -> x
+    _ -> extractStartState rs
+
+sameAlphaLetters :: Alphabet -> Either String Alphabet
+sameAlphaLetters a = if (length a == length (nub a)) then Left "ERROR: Alphabet contains same elements." else Right a
+
+inputStartLetter :: Tape -> Either String Char
+inputStartLetter (t:ts) = case t of
+    '$' -> Right '$'
+    x -> Left ("ERROR: Tape start character has to be \'$\'. Current character: " ++ show x)
+
 findRule :: TM -> Either String Rule
 findRule (a, (x:xs), s, t, i) = case x of 
     (ERule (EIn c0 s0) o) -> if (s == s0 && t!!i == c0) then Right x else findRule (a, xs, s, t, i)
