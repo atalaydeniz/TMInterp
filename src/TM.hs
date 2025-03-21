@@ -5,8 +5,8 @@ import ParseTM
 ---------------------------------------------------------------------------------
 -- Alphabet-Tape Checks
 
-sameAlphaLetters :: [Char] -> Either String Alphabet
-sameAlphaLetters a = if ((length a) == (length (nub a))) then Left "ERROR: Alphabet contains same elements." else Right a
+sameAlphaLetters :: Alphabet -> Either String Alphabet
+sameAlphaLetters a = if ((length a) /= (length (nub a))) then Left "ERROR: Alphabet contains same elements." else Right a
 
 inputStartLetter :: Tape -> Either String ()
 inputStartLetter (t:ts) = case t of
@@ -14,7 +14,10 @@ inputStartLetter (t:ts) = case t of
     x -> Left ("ERROR: Tape start character has to be \'$\'. Current character: " ++ show x)
 
 inputNotInAlphabet :: Alphabet -> Tape -> Either String ()
-inputNotInAlphabet a (t:ts) = if (elem t a) then inputNotInAlphabet a ts else Left ("ERROR: Character used in tape not contained in alphabet: " ++ show t)
+inputNotInAlphabet a (t:ts) = case t of
+    '$' -> inputNotInAlphabet a ts
+    '#' -> inputNotInAlphabet a ts
+    x -> if (elem x a) then inputNotInAlphabet a ts else Left ("ERROR: Character used in tape not contained in alphabet: " ++ show x)
 inputNotInAlphabet a [] = Right ()
 
 forbiddenAlphabet :: Alphabet -> Either String ()
@@ -32,16 +35,6 @@ isStarterRule (a, r:rs, s, t, i) = case r of
     (ERule (EIn '$' x) (EOut 'R' y)) -> True
     _ -> isStarterRule (a, rs, s, t, i)
 isStarterRule (a, [], s, t, i) = False
-
-
-exTM :: TM 
-exTM = (['a'], [
-    (ERule (EIn '$' "s0") (EOut 'R' "s1")),
-     (ERule (EIn '#' "s1") (EOut 'a' "s1")),
-     (ERule (EIn 'a' "s1") (EOut 'R' "s2")),
-     (ERule (EIn '#' "s2") (EOut 'a' "s2")),
-     (ERule (EIn 'a' "s2") (EOut 'R' "h"))
-     ], "s0", "$", 0 :: Int)
 
 elimSameRules :: [Rule] -> [Rule]
 elimSameRules = nub
@@ -70,7 +63,7 @@ applyRule :: TM -> Out -> Either String TM
 applyRule (a, r, s, t, i) (EOut 'L' s1) = if (i == 0) then (Left "ERROR: Index is negative") else (Right (a, r, s1, t, i - 1))
 applyRule (a, r, s, t, i) (EOut 'R' s1) = if (i + 1 == length t) then (Right (a, r, s1, t++['#'], i+1)) else (Right (a, r, s1, t, i+1))
 applyRule (a, r, s, t, i) (EOut x s1) = if (x /= '#' && (elem x a) == False) then (Left "ERROR: A symbol not in alphabet cannot be written on tape") else
-    Right (a, r, s, replace t x i, i)
+    Right (a, r, s1, replace t x i, i)
 
 replace :: Tape -> Char -> TapeIndex -> Tape
 replace t x i = take i t ++ [x] ++ drop (i+1) t
