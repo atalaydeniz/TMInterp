@@ -5,8 +5,8 @@ import ParseTM
 ---------------------------------------------------------------------------------
 -- Alphabet-Tape Checks
 
-sameAlphaLetters :: Alphabet -> Either String Alphabet
-sameAlphaLetters a = if (length a == length (nub a)) then Left "ERROR: Alphabet contains same elements." else Right a
+sameAlphaLetters :: [Char] -> Either String Alphabet
+sameAlphaLetters a = if ((length a) == (length (nub a))) then Left "ERROR: Alphabet contains same elements." else Right a
 
 inputStartLetter :: Tape -> Either String ()
 inputStartLetter (t:ts) = case t of

@@ -7,22 +7,30 @@ type State = String
 type Tape = String
 type TapeIndex = Int
 
-data In = EIn Char State deriving (Show)
+data In = EIn Char State deriving (Show, Eq)
 
-data Out = EOut Char State deriving (Show)
+data Out = EOut Char State deriving (Show, Eq)
 
-data Rule = ERule In Out deriving (Show)
+data Rule = ERule In Out deriving (Show, Eq)
 
-data Stmt = EDef TM | ERun TM deriving (Show)
+data Stmt = EDef TM | ERun TM deriving (Show, Eq)
 type Prog = [Stmt]
 
 type TM = (Alphabet, [Rule], State, Tape, TapeIndex)
+
+pPlus :: Parsec String () Char
+pPlus = do
+    x <- choice [char '$', char '#']
+    return x
+
+pAlphaNumPlus :: Parsec String () Char
+pAlphaNumPlus = alphaNum <|> pPlus
 
 pInput :: Parsec String () Tape
 pInput = do
     string "Input:"
     spaces
-    s <- many1 alphaNum
+    s <- many1 pAlphaNumPlus
     return s
 
 pAlphabet :: Parsec String () Alphabet
@@ -40,7 +48,7 @@ pRule :: Parsec String () Rule
 pRule = do
     char '('
     spaces
-    a <- letter
+    a <- pAlphaNumPlus
     spaces
     char ','
     spaces
@@ -52,7 +60,7 @@ pRule = do
     spaces
     char '('
     spaces
-    c <- letter
+    c <- pAlphaNumPlus
     spaces 
     char ','
     spaces 

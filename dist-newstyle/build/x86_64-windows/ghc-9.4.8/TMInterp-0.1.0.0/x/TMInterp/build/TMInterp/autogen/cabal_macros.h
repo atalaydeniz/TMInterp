@@ -30,6 +30,16 @@
   (major1) == 4 && (major2) <  17 || \
   (major1) == 4 && (major2) == 17 && (minor) <= 2)
 #endif /* MIN_VERSION_base */
+/* package parsec-3.1.16.1 */
+#ifndef VERSION_parsec
+#define VERSION_parsec "3.1.16.1"
+#endif /* VERSION_parsec */
+#ifndef MIN_VERSION_parsec
+#define MIN_VERSION_parsec(major1,major2,minor) (\
+  (major1) <  3 || \
+  (major1) == 3 && (major2) <  1 || \
+  (major1) == 3 && (major2) == 1 && (minor) <= 16)
+#endif /* MIN_VERSION_parsec */
 
 /* tool gcc-14.0.6 */
 #ifndef TOOL_VERSION_gcc
