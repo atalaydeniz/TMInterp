@@ -5,6 +5,8 @@ import ParseTM
 import TM
 import Text.Parsec
 
+s :: String
+
 s = "run(Alphabet:{a,b} \
         \Input: $abab \
         \Rules:($,s0) -> (R, s1) \
@@ -25,4 +27,4 @@ evalProg (x:xs) = case x of
 
 
 main :: IO ()
-main = prettyPrintEither (startEval l_)
+main = prettyPrintEither (startEval r_)

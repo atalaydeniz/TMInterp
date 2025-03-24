@@ -1,7 +1,6 @@
 module TMCollection where
 
 import ParseTM
-import TM
 
 r_ :: TM
 r_ = ([], [
