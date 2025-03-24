@@ -2,28 +2,47 @@ module TM where
 import Data.List
 import ParseTM
 
+data ErrorType = DuplicatedAlphabetError          |
+                 TapeStartCharError Char          |
+                 InvalidCharinTapeError           |
+                 TapeCharNotInAlphabetError Char  |
+                 StuckMachineError                |
+                 NegativeBoundTapeError           |
+                 NoRulesError                     |
+                 RuleWriteNonAlphabetCharError Char 
+
 ---------------------------------------------------------------------------------
 -- Alphabet-Tape Checks
 
-sameAlphaLetters :: Alphabet -> Either String Alphabet
-sameAlphaLetters a = if ((length a) /= (length (nub a))) then Left "ERROR: Alphabet contains same elements." else Right a
+throwError :: ErrorType -> IO ()
+throwError e = case e of
+    DuplicatedAlphabetError         -> putStrLn "ERROR: Alphabet contains same elements."
+    TapeStartCharError c            -> putStrLn ("ERROR: Tape start character has to be \'$\'. Current character: " ++ show c)
+    InvalidCharinTapeError          -> putStrLn "ERROR: Characters '#', '$', 'L' or 'R' cannot be included in alphabet"
+    TapeCharNotInAlphabetError c    -> putStrLn ("ERROR: Character used in tape not contained in alphabet: " ++ show c)
+    StuckMachineError               -> putStrLn "ERROR: Machine is stuck."
+    NegativeBoundTapeError          -> putStrLn "ERROR: Index is negative."
+    NoRulesError                    -> putStrLn "No rules are given."
+    RuleWriteNonAlphabetCharError c -> putStrLn ("ERROR: A symbol not in alphabet cannot be written on tape: " ++ show c)
 
-inputStartLetter :: Tape -> Either String ()
+sameAlphaLetters :: Alphabet -> Either ErrorType ()
+sameAlphaLetters a = if ((length a) /= (length (nub a))) then Left DuplicatedAlphabetError else Right ()
+
+inputStartLetter :: Tape -> Either ErrorType ()
 inputStartLetter (t:ts) = case t of
     '$' -> Right ()
-    x -> Left ("ERROR: Tape start character has to be \'$\'. Current character: " ++ show x)
+    x -> Left (TapeStartCharError x)
 
-inputNotInAlphabet :: Alphabet -> Tape -> Either String ()
+inputNotInAlphabet :: Alphabet -> Tape -> Either ErrorType ()
 inputNotInAlphabet a (t:ts) = case t of
     '$' -> inputNotInAlphabet a ts
     '#' -> inputNotInAlphabet a ts
-    x -> if (elem x a) then inputNotInAlphabet a ts else Left ("ERROR: Character used in tape not contained in alphabet: " ++ show x)
+    x -> if (elem x a) then inputNotInAlphabet a ts else Left (TapeCharNotInAlphabetError x)
 inputNotInAlphabet a [] = Right ()
 
-forbiddenAlphabet :: Alphabet -> Either String ()
-forbiddenAlphabet a = if (elem '$' a) || (elem '#' a) then Left ("ERROR: Characters '#' or '$' cannot be included in alphabet") else 
-                        if (elem 'L' a) || (elem 'R' a) then Left ("ERROR: Characters 'L' or 'R' cannot be included in alphabet") else
-                            Right ()
+forbiddenAlphabet :: Alphabet -> Either ErrorType ()
+forbiddenAlphabet a = if (elem '$' a) || (elem '#' a) || (elem 'L' a) || (elem 'R' a) then Left InvalidCharinTapeError
+                            else Right ()
 
 ----------------------------------------------------------------------------------
 -- Rule Checks
@@ -54,15 +73,15 @@ extractStartState (r:rs) = case r of
     (ERule (EIn '$' x) (EOut 'R' y)) -> x
     _ -> extractStartState rs
 
-findRule :: TM -> Either String Rule
+findRule :: TM -> Either ErrorType Rule
 findRule (a, (x:xs), s, t, i) = case x of 
-    (ERule (EIn c0 s0) o) -> if (s == s0 && t!!i == c0) then Right x else findRule (a, xs, s, t, i)
-findRule (_, [], _, _, _) = Left "ERROR: Machine is stuck"
+    (ERule (EIn c0 s0) _) -> if (s == s0 && t!!i == c0) then Right x else findRule (a, xs, s, t, i)
+findRule (_, [], _, _, _) = Left StuckMachineError
 
-applyRule :: TM -> Out -> Either String TM
-applyRule (a, r, s, t, i) (EOut 'L' s1) = if (i == 0) then (Left "ERROR: Index is negative") else (Right (a, r, s1, t, i - 1))
+applyRule :: TM -> Out -> Either ErrorType TM
+applyRule (a, r, s, t, i) (EOut 'L' s1) = if (i == 0) then Left NegativeBoundTapeError else (Right (a, r, s1, t, i - 1))
 applyRule (a, r, s, t, i) (EOut 'R' s1) = if (i + 1 == length t) then (Right (a, r, s1, t++['#'], i+1)) else (Right (a, r, s1, t, i+1))
-applyRule (a, r, s, t, i) (EOut x s1) = if (x /= '#' && (elem x a) == False) then (Left "ERROR: A symbol not in alphabet cannot be written on tape") else
+applyRule (a, r, s, t, i) (EOut x s1) = if (x /= '#' && (elem x a) == False) then Left (RuleWriteNonAlphabetCharError x) else
     Right (a, r, s1, replace t x i, i)
 
 replace :: Tape -> Char -> TapeIndex -> Tape
@@ -78,11 +97,11 @@ reduceTapeInput t = if last t == '#' then reduceTapeInput (init t) else t
 prettyPrint :: TM -> IO ()
 prettyPrint (a, _, s, t, i) = putStrLn (intersperse ' ' (intersperse '|' t))
 
-prettyPrintEither :: Either String TM -> IO ()
-prettyPrintEither (Left error) = putStrLn error
+prettyPrintEither :: Either ErrorType TM -> IO ()
+prettyPrintEither (Left error) = throwError error
 prettyPrintEither (Right x) = prettyPrint x
 
-startEval :: TM -> Either String TM  
+startEval :: TM -> Either ErrorType TM  
 startEval (a, r, s, t, i) = 
     case forbiddenAlphabet a of 
         Left x -> Left x 
@@ -92,10 +111,10 @@ startEval (a, r, s, t, i) =
                 Left x -> Left x
                 Right () -> case sameAlphaLetters a of 
                     Left x -> Left x
-                    Right a -> eval (a, elimSameRules r, extractStartState r, reduceTapeInput t, i)
+                    Right () -> eval (a, elimSameRules r, extractStartState r, reduceTapeInput t, i)
 
-eval :: TM -> Either String TM
-eval (a, [], _, x, _) = Left "No rules are given."
+eval :: TM -> Either ErrorType TM
+eval (a, [], _, x, _) = Left NoRulesError
 eval (a, r, s, t, i) =  case findRule (a, r, s, t, i) of
     Right (ERule (EIn c0 s0) (EOut c1 s1)) -> case applyRule (a, r, s, t, i) (EOut c1 s1) of
         Right (a, r', "h", t', i') -> Right (a, r', "h", t', i')

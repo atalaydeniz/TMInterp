@@ -25,4 +25,4 @@ evalProg (x:xs) = case x of
 
 
 main :: IO ()
-main = parseProg
+main = prettyPrintEither (startEval l_)
