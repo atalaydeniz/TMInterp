@@ -92,6 +92,7 @@ executable TMInterp
     build-depends:
         base ^>=4.17.2.1,
         parsec,
+        mtl,
         TMInterp
 
     -- Directories containing source files.

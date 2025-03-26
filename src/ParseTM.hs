@@ -13,7 +13,9 @@ data Out = EOut Char State deriving (Show, Eq)
 
 data Rule = ERule In Out deriving (Show, Eq)
 
-data Stmt = EDef TM | ERun TM deriving (Show, Eq)
+data Expr = ETM TM | EVar String deriving (Show, Eq)
+
+data Stmt = EAssign String Expr | ERun Expr deriving (Show, Eq)
 type Prog = [Stmt]
 
 type TM = (Alphabet, [Rule], State, Tape, TapeIndex)
@@ -33,16 +35,33 @@ pInput = do
     s <- many1 pAlphaNumPlus
     return s
 
+pCharAndSpace :: Parsec String () Char
+pCharAndSpace = do
+    a <- letter
+    spaces
+    return a
+
+pCommaandSpace :: Parsec String () ()
+pCommaandSpace = do
+    char ','
+    spaces
+    return ()
+
+pInsideAlphabet :: Parsec String () Alphabet
+pInsideAlphabet = do 
+    aList <- sepBy (pCharAndSpace) (pCommaandSpace)
+    return aList
+
 pAlphabet :: Parsec String () Alphabet
 pAlphabet = do
     string "Alphabet:"
     spaces
     char '{'
     spaces
-    a <- sepBy letter (char ',')
+    aList <- pInsideAlphabet
     spaces
     char '}'
-    return a
+    return (aList)
 
 pRule :: Parsec String () Rule
 pRule = do
@@ -70,36 +89,63 @@ pRule = do
     spaces
     return (ERule (EIn a b) (EOut c d))
 
-pTMDef :: Parsec String () Stmt
-pTMDef = do
+pTM :: Parsec String () Expr 
+pTM = do
+    string "begin"
+    spaces
     alp <- pAlphabet
     spaces
     inp <- pInput
     spaces
     string "Rules:"
     spaces
-    ruleList <- many pRule
-    return (EDef (alp, ruleList, "x", inp, 0))
+    ruleList <- many1 pRule
+    spaces
+    string "end"
+    return (ETM (alp, ruleList, "x", inp, 0))
+
+pVar :: Parsec String () Expr
+pVar = do
+    var <- many1 alphaNum
+    return (EVar var)
 
 pRun :: Parsec String () Stmt
 pRun = do
     string "run("
     spaces
-    EDef tm <- pTMDef
+    e <- pExpr
     spaces
     char ')'
-    return (ERun tm)
+    return (ERun e)
+
+pExpr :: Parsec String () Expr
+pExpr = do
+    spaces
+    x <- choice [pTM, pVar]
+    spaces
+    return x
+
+pAssign :: Parsec String () Stmt
+pAssign = do
+    string "Var"
+    spaces
+    var <- many1 alphaNum
+    spaces
+    char '='
+    spaces
+    e <- pExpr
+    return (EAssign var e)
 
 pStmt :: Parsec String () Stmt
 pStmt = do
     spaces
-    x <- choice [pTMDef, pRun]
+    x <- choice [pAssign, pRun]
     spaces
     return x
 
 pProg :: Parsec String () Prog
 pProg = do
-    x <- many pStmt
+    x <- many1 pStmt
     return x
 
 

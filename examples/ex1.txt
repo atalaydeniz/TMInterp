@@ -1,0 +1,7 @@
+run( 
+    begin
+    Alphabet: {} 
+    Input: $ 
+    Rules: ($,s0) -> (R, h)
+    end
+    ) 
