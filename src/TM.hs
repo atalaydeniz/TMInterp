@@ -2,7 +2,9 @@ module TM where
 import Data.List
 import ParseTM
 
-data ErrorType = ParsingError                     |
+data ErrorType = OK                               |
+                 VariableNotFoundError String     |
+                 ParsingError                     |
                  EmptyTapeError                   |
                  DuplicatedAlphabetError          |
                  TapeStartCharError Char          |
@@ -16,9 +18,10 @@ data ErrorType = ParsingError                     |
 ---------------------------------------------------------------------------------
 -- Alphabet-Tape Checks
 
-throwError :: ErrorType -> IO ()
-throwError e = case e of
-    ParsingError                    -> putStrLn "Error: Cannot parse."
+printError :: ErrorType -> IO ()
+printError e = case e of
+    VariableNotFoundError s         -> putStrLn ("ERROR: Variable " ++ show s ++ " is not found.")
+    ParsingError                    -> putStrLn "ERROR: Cannot parse."
     EmptyTapeError                  -> putStrLn "ERROR: Input tape cannot be empty. Perhaps you wanted \"$\"."
     DuplicatedAlphabetError         -> putStrLn "ERROR: Alphabet contains same elements."
     TapeStartCharError c            -> putStrLn ("ERROR: Tape start character has to be \'$\'. Current character: " ++ show c)
@@ -103,7 +106,7 @@ prettyPrint :: TM -> IO ()
 prettyPrint (_, _, _, t, _) = putStrLn (intersperse ' ' (intersperse '|' t))
 
 prettyPrintEither :: Either ErrorType TM -> IO ()
-prettyPrintEither (Left error) = throwError error
+prettyPrintEither (Left error) = printError error
 prettyPrintEither (Right x) = prettyPrint x
 
 startEval :: TM -> Either ErrorType TM
