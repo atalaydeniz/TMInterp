@@ -2,8 +2,7 @@ module TM where
 import Data.List
 import ParseTM
 
-data ErrorType = OK                               |
-                 VariableNotFoundError String     |
+data ErrorType = VariableNotFoundError String     |
                  ParsingError                     |
                  EmptyTapeError                   |
                  DuplicatedAlphabetError          |
