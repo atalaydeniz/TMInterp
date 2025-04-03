@@ -8,12 +8,21 @@ type Tape = String
 type TapeIndex = Int
 
 data In = EIn Char State deriving (Show, Eq)
-
 data Out = EOut Char State deriving (Show, Eq)
-
 data Rule = ERule In Out deriving (Show, Eq)
 
-data Expr = ETM TM | EVar String deriving (Show, Eq)
+data Gen = EGenR Alphabet               |
+           EGenL Alphabet               |
+           EGenW Char Alphabet          | 
+           EGenRUntil Char Alphabet     |
+           EGenLUntil Char Alphabet     |
+           EGenRUntilNot Char Alphabet  |
+           EGenLUntilNot Char Alphabet  |
+           EGenLShift Alphabet          |
+           EGenRShift Alphabet
+           deriving (Show, Eq)
+
+data Expr = ETM TM | EVar String | EGen deriving (Show, Eq)
 
 data Stmt = EAssign String Expr | ERun Expr deriving (Show, Eq)
 type Prog = [Stmt]
@@ -109,6 +118,13 @@ pVar = do
     var <- many1 alphaNum
     return (EVar var)
 
+pExpr :: Parsec String () Expr
+pExpr = do
+    spaces
+    x <- choice [pTM, pVar]
+    spaces
+    return x
+
 pRun :: Parsec String () Stmt
 pRun = do
     string "run("
@@ -117,13 +133,6 @@ pRun = do
     spaces
     char ')'
     return (ERun e)
-
-pExpr :: Parsec String () Expr
-pExpr = do
-    spaces
-    x <- choice [pTM, pVar]
-    spaces
-    return x
 
 pAssign :: Parsec String () Stmt
 pAssign = do

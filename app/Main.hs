@@ -1,18 +1,16 @@
 module Main where
 
-import TMCollection
 import ParseTM
 import TM
 import Text.Parsec
 import Control.Monad.State.Lazy
 import Control.Monad.Except 
-import TM (printError)
 
 type Env = [(String, TM)]
     
 parseProg :: String -> Either ErrorType Prog
 parseProg p = case parse pProg "" p of
-  Left err   -> Left ParsingError
+  Left _   -> Left ParsingError
   Right prog -> Right prog
 
 printParseResult :: Either ErrorType Prog -> IO ()
@@ -60,7 +58,10 @@ lookupTM s ((s', tm') : env) = if (s == s') then Right tm' else lookupTM s env
  
 assignVariable :: String -> TM -> Env -> Env
 assignVariable var tm [] = [(var, tm)]
-assignVariable var tm ((var', tm') : xs) = if (var == var') then ((var, tm) : xs) else (var', tm') : (assignVariable var tm xs)  
+assignVariable var tm ((var', tm') : xs) = if (var == var') then ((var, tm) : xs) else (var', tm') : (assignVariable var tm xs) 
+
+genTM :: TM -> Alphabet -> Either ErrorType TM 
+genTM = undefined
 
 printResult :: Either ErrorType () -> IO ()
 printResult (Left err) = printError err
@@ -68,12 +69,14 @@ printResult (Right ()) = putStrLn "Success"
 
 main :: IO ()
 main = do
-    x <- readFile "examples/ex2.txt"
+    x <- readFile "examples/ex3.txt"
     case (parseProg x) of 
       (Left err) -> printError err
       (Right p) -> do 
-        evalStateT (runExceptT (evalStmt p)) []
-        putStrLn ""
+        progResult <- evalStateT (runExceptT (evalStmt p)) []
+        case progResult of
+          (Left err) -> printError err
+          (Right _) -> putStrLn ""
 
       
 

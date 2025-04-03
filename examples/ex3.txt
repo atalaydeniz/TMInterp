@@ -1,0 +1,33 @@
+Var exTM = begin
+       Alphabet: {a, b}
+       Input: $
+       Rules: ($, s0) -> (R, s0)
+             (#, s0) -> (a, s1)
+             (a, s1) -> (R, s2)
+             (#, s2) -> (a, s2)
+             (a, s2) -> (R, s3)
+             (#, s3) -> (b, s3)
+             (b, s3) -> (R, s4)
+             (#, s4) -> (b, h)
+             end
+
+run(exTM)
+
+Var exTM = begin
+        Alphabet: {a}
+        Input: $
+        Rules: ($, s0) -> (R, s0)
+                (#, s0) -> (a, s1)
+                (a, s1) -> (R, s2)
+                (#, s2) -> (R, h)
+                end 
+            
+run( 
+    begin
+    Alphabet: {} 
+    Input: $ 
+    Rules: ($,s0) -> (R, h)
+    end
+    ) 
+
+run(exTM)
