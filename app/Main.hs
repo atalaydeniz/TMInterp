@@ -51,6 +51,7 @@ evalExpr :: Expr -> Env -> Either ErrorType TM
 evalExpr e env = case e of
   (ETM tm) -> Right tm
   (EVar var) -> lookupTM var env
+  (EGen gen) -> generate gen
 
 lookupTM :: String -> Env -> Either ErrorType TM
 lookupTM s [] = Left (VariableNotFoundError s)
@@ -60,8 +61,8 @@ assignVariable :: String -> TM -> Env -> Env
 assignVariable var tm [] = [(var, tm)]
 assignVariable var tm ((var', tm') : xs) = if (var == var') then ((var, tm) : xs) else (var', tm') : (assignVariable var tm xs) 
 
-genTM :: TM -> Alphabet -> Either ErrorType TM 
-genTM = undefined
+generate :: Gen -> Either ErrorType TM 
+generate gen = undefined
 
 printResult :: Either ErrorType () -> IO ()
 printResult (Left err) = printError err

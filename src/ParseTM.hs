@@ -22,7 +22,7 @@ data Gen = EGenR Alphabet               |
            EGenRShift Alphabet
            deriving (Show, Eq)
 
-data Expr = ETM TM | EVar String | EGen deriving (Show, Eq)
+data Expr = ETM TM | EVar String | EGen Gen deriving (Show, Eq)
 
 data Stmt = EAssign String Expr | ERun Expr deriving (Show, Eq)
 type Prog = [Stmt]
@@ -118,10 +118,116 @@ pVar = do
     var <- many1 alphaNum
     return (EVar var)
 
+pEGenR :: Parsec String () Gen 
+pEGenR = do 
+    string "EGenR("
+    spaces
+    alp <- pAlphabet
+    spaces 
+    char ')'
+    return (EGenR alp)
+
+pEGenL :: Parsec String () Gen 
+pEGenL = do 
+    string "EGenL("
+    spaces
+    alp <- pAlphabet
+    spaces 
+    char ')'
+    return (EGenL alp)
+
+pEGenW :: Parsec String () Gen
+pEGenW = do 
+    string "EGenW("
+    spaces
+    ch <- pAlphaNumPlus
+    spaces
+    char ','
+    spaces
+    alp <- pAlphabet
+    spaces 
+    char ')'
+    return (EGenW ch alp)
+
+pEGenRUntil :: Parsec String () Gen
+pEGenRUntil = do 
+    string "EGenRUntil("
+    spaces
+    ch <- pAlphaNumPlus
+    spaces
+    char ','
+    spaces
+    alp <- pAlphabet
+    spaces 
+    char ')'
+    return (EGenRUntil ch alp)
+
+pEGenLUntil :: Parsec String () Gen
+pEGenLUntil = do 
+    string "EGenLUntil("
+    spaces
+    ch <- pAlphaNumPlus
+    spaces
+    char ','
+    spaces
+    alp <- pAlphabet
+    spaces 
+    char ')'
+    return (EGenLUntil ch alp)
+
+pEGenRUntilNot :: Parsec String () Gen
+pEGenRUntilNot = do 
+    string "EGenRUntilNot("
+    spaces
+    ch <- pAlphaNumPlus
+    spaces
+    char ','
+    spaces
+    alp <- pAlphabet
+    spaces 
+    char ')'
+    return (EGenRUntilNot ch alp)
+
+pEGenLUntilNot :: Parsec String () Gen
+pEGenLUntilNot = do 
+    string "EGenLUntilNot("
+    spaces
+    ch <- pAlphaNumPlus
+    spaces
+    char ','
+    spaces
+    alp <- pAlphabet
+    spaces 
+    char ')'
+    return (EGenLUntilNot ch alp)
+
+pEGenRShift :: Parsec String () Gen 
+pEGenRShift = do 
+    string "EGenRShift("
+    spaces
+    alp <- pAlphabet
+    spaces 
+    char ')'
+    return (EGenRShift alp)
+
+pEGenLShift :: Parsec String () Gen 
+pEGenLShift = do 
+    string "EGenL("
+    spaces
+    alp <- pAlphabet
+    spaces 
+    char ')'
+    return (EGenLShift alp)
+
+pGen :: Parsec String () Expr
+pGen = do
+    gen <- choice [pEGenR, pEGenL, pEGenRUntil, pEGenLUntil, pEGenRUntilNot, pEGenLUntilNot, pEGenRShift, pEGenLShift]
+    return (EGen gen)
+
 pExpr :: Parsec String () Expr
 pExpr = do
     spaces
-    x <- choice [pTM, pVar]
+    x <- choice [pTM, pVar, pGen]
     spaces
     return x
 
