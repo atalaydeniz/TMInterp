@@ -1,0 +1,3 @@
+Var exTM = GenR({a,b})
+
+run(exTM)

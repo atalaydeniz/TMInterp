@@ -61,15 +61,20 @@ pInsideAlphabet = do
     aList <- sepBy (pCharAndSpace) (pCommaandSpace)
     return aList
 
-pAlphabet :: Parsec String () Alphabet
-pAlphabet = do
-    string "Alphabet:"
-    spaces
+pAlphabetWBrackets :: Parsec String () Alphabet 
+pAlphabetWBrackets = do 
     char '{'
     spaces
     aList <- pInsideAlphabet
     spaces
     char '}'
+    return aList
+
+pAlphabet :: Parsec String () Alphabet
+pAlphabet = do
+    string "Alphabet:"
+    spaces
+    aList <- pAlphabetWBrackets
     return (aList)
 
 pRule :: Parsec String () Rule
@@ -118,116 +123,131 @@ pVar = do
     var <- many1 alphaNum
     return (EVar var)
 
+pGenKeyword :: Parsec String () ()
+pGenKeyword = do 
+    string "Gen"
+    return ()
+
 pEGenR :: Parsec String () Gen 
 pEGenR = do 
-    string "EGenR("
+    string "R("
     spaces
-    alp <- pAlphabet
+    alp <- pAlphabetWBrackets
     spaces 
     char ')'
     return (EGenR alp)
 
 pEGenL :: Parsec String () Gen 
 pEGenL = do 
-    string "EGenL("
+    string "L("
     spaces
-    alp <- pAlphabet
+    alp <- pAlphabetWBrackets
     spaces 
     char ')'
     return (EGenL alp)
 
 pEGenW :: Parsec String () Gen
 pEGenW = do 
-    string "EGenW("
+    string "W("
     spaces
     ch <- pAlphaNumPlus
     spaces
     char ','
     spaces
-    alp <- pAlphabet
+    alp <- pAlphabetWBrackets
     spaces 
     char ')'
     return (EGenW ch alp)
 
 pEGenRUntil :: Parsec String () Gen
 pEGenRUntil = do 
-    string "EGenRUntil("
+    string "RUntil("
     spaces
     ch <- pAlphaNumPlus
     spaces
     char ','
     spaces
-    alp <- pAlphabet
+    alp <- pAlphabetWBrackets
     spaces 
     char ')'
     return (EGenRUntil ch alp)
 
 pEGenLUntil :: Parsec String () Gen
 pEGenLUntil = do 
-    string "EGenLUntil("
+    string "LUntil("
     spaces
     ch <- pAlphaNumPlus
     spaces
     char ','
     spaces
-    alp <- pAlphabet
+    alp <- pAlphabetWBrackets
     spaces 
     char ')'
     return (EGenLUntil ch alp)
 
 pEGenRUntilNot :: Parsec String () Gen
 pEGenRUntilNot = do 
-    string "EGenRUntilNot("
+    string "RUntilNot("
     spaces
     ch <- pAlphaNumPlus
     spaces
     char ','
     spaces
-    alp <- pAlphabet
+    alp <- pAlphabetWBrackets
     spaces 
     char ')'
     return (EGenRUntilNot ch alp)
 
 pEGenLUntilNot :: Parsec String () Gen
 pEGenLUntilNot = do 
-    string "EGenLUntilNot("
+    string "LUntilNot("
     spaces
     ch <- pAlphaNumPlus
     spaces
     char ','
     spaces
-    alp <- pAlphabet
+    alp <- pAlphabetWBrackets
     spaces 
     char ')'
     return (EGenLUntilNot ch alp)
 
 pEGenRShift :: Parsec String () Gen 
 pEGenRShift = do 
-    string "EGenRShift("
+    string "RShift("
     spaces
-    alp <- pAlphabet
+    alp <- pAlphabetWBrackets
     spaces 
     char ')'
     return (EGenRShift alp)
 
 pEGenLShift :: Parsec String () Gen 
 pEGenLShift = do 
-    string "EGenL("
+    string "LShift("
     spaces
-    alp <- pAlphabet
+    alp <- pAlphabetWBrackets
     spaces 
     char ')'
     return (EGenLShift alp)
 
+pRightGen :: Parsec String () Gen 
+pRightGen = (try pEGenR) <|> (try pEGenRShift) <|> (try pEGenRUntil) <|> (try pEGenRUntilNot)
+
+pLeftGen :: Parsec String () Gen 
+pLeftGen = (try pEGenL) <|> (try pEGenLShift) <|> (try pEGenLUntil) <|> (try pEGenLUntilNot)
+
+pWriteGen :: Parsec String () Gen 
+pWriteGen = try pEGenW
+
 pGen :: Parsec String () Expr
 pGen = do
-    gen <- choice [pEGenR, pEGenL, pEGenRUntil, pEGenLUntil, pEGenRUntilNot, pEGenLUntilNot, pEGenRShift, pEGenLShift]
+    pGenKeyword
+    gen <- choice [pRightGen, pLeftGen, pWriteGen]
     return (EGen gen)
 
 pExpr :: Parsec String () Expr
 pExpr = do
     spaces
-    x <- choice [pTM, pVar, pGen]
+    x <- choice [pGen, pTM, pVar]
     spaces
     return x
 

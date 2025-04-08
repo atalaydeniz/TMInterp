@@ -58,7 +58,7 @@ library
     import:           warnings
 
     -- Modules exported by the library.
-    exposed-modules:  TM, TMCollection, ParseTM
+    exposed-modules:  TM, TMCollection, ParseTM, TMGen
 
     -- Modules included in this library but not exported.
     -- other-modules:

@@ -2,6 +2,7 @@ module Main where
 
 import ParseTM
 import TM
+import TMGen
 import Text.Parsec
 import Control.Monad.State.Lazy
 import Control.Monad.Except 
@@ -62,7 +63,9 @@ assignVariable var tm [] = [(var, tm)]
 assignVariable var tm ((var', tm') : xs) = if (var == var') then ((var, tm) : xs) else (var', tm') : (assignVariable var tm xs) 
 
 generate :: Gen -> Either ErrorType TM 
-generate gen = undefined
+generate (EGenR alp) = Right (generateR_ alp)
+generate (EGenL alp) = Right (generateL_ alp)
+generate (EGenW ch alp) = Right (generateW_ alp ch)
 
 printResult :: Either ErrorType () -> IO ()
 printResult (Left err) = printError err
@@ -70,7 +73,7 @@ printResult (Right ()) = putStrLn "Success"
 
 main :: IO ()
 main = do
-    x <- readFile "examples/ex3.txt"
+    x <- readFile "examples/ex4.txt"
     case (parseProg x) of 
       (Left err) -> printError err
       (Right p) -> do 
